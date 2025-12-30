@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>FNF GH4-REDUX</title>
+<style>
+body {
+  margin: 0;
+  background: black;
+  color: #ff0033;
+  font-family: Arial, sans-serif;
+}
+canvas {
+  display: block;
+  margin: auto;
+  background: #050505;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" width="800" height="450"></canvas>
+
+<!-- UMA ÚNICA MÚSICA -->
+<audio id="music" src="Intro.ogg" loop></audio>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let state = "menu"; // menu | game | dead
+
+// WASD
+const lanes = ["a","s","w","d"];
+const arrows = ["⬅","⬇","⬆","➡"];
+
+let notes = [];
+let speed = 24;
+let hp = 100;
+let score = 0;
+
+// ================= MENU =================
+function drawMenu() {
+  ctx.clearRect(0,0,800,450);
+
+  ctx.fillStyle = "#ff0033";
+  ctx.font = "48px Arial Black";
+  ctx.fillText("GH4-REDUX", 230, 150);
+
+  ctx.font = "22px Arial";
+  ctx.fillText("IMPOSSIBLE MOD", 310, 190);
+
+  ctx.font = "18px monospace";
+  ctx.fillText("PRESS ENTER", 350, 260);
+}
+
+// ================= NOTAS =================
+function spawnNotes() {
+  for (let i = 0; i < 4; i++) {
+    notes.push({
+      lane: Math.floor(Math.random() * 4),
+      y: -20,
+      fake: Math.random() < 0.4,
+      invisible: Math.random() < 0.25
+    });
+  }
+  speed += 0.4; // cada vez mais impossível
+}
+
+// ================= INPUT =================
+document.addEventListener("keydown", e => {
+  if (state === "menu" && e.key === "Enter") startGame();
+  if (e.key === "Escape") backToMenu();
+
+  if (state !== "game") return;
+
+  const key = e.key.toLowerCase();
+  notes.forEach(n => {
+    if (lanes[n.lane] === key && Math.abs(n.y - 400) < 8) {
+      if (n.fake) hp -= 25;
+      else score += 500;
+      n.y = 9999;
+    }
+  });
+});
+
+// ================= GAME CONTROL =================
+function startGame() {
+  state = "game";
+  notes = [];
+  speed = 24;
+  hp = 100;
+  score = 0;
+
+  const music = document.getElementById("music");
+  music.currentTime = 0;
+  music.play();
+}
+
+function backToMenu() {
+  state = "menu";
+  document.getElementById("music").pause();
+}
+
+// ================= GAME LOOP =================
+setInterval(() => {
+  if (state === "game") spawnNotes();
+}, 140);
+
+function drawGame() {
+  ctx.clearRect(0,0,800,450);
+
+  ctx.fillStyle = "#ff0033";
+  ctx.font = "14px monospace";
+  ctx.fillText("HP: " + hp, 10, 20);
+  ctx.fillText("Score: " + score, 10, 40);
+  ctx.fillText("Speed: " + speed.toFixed(1), 10, 60);
+
+  arrows.forEach((a,i)=>{
+    ctx.fillText(a, 230 + i*100, 420);
+  });
+
+  notes.forEach(n => {
+    n.y += speed;
+
+    if (n.y > 430 && !n.fake) {
+      hp -= 15;
+      n.y = 9999;
+    }
+
+    if (!n.invisible) {
+      ctx.fillStyle = n.fake ? "#8000ff" : "#00ffff";
+      ctx.fillRect(240 + n.lane*100, n.y, 35, 14);
+    }
+  });
+
+  if (hp <= 0) state = "dead";
+}
+
+function drawDead() {
+  ctx.clearRect(0,0,800,450);
+  ctx.fillStyle = "#880000";
+  ctx.font = "44px Arial Black";
+  ctx.fillText("YOU DIED", 260, 240);
+}
+
+// ================= MAIN LOOP =================
+function loop() {
+  if (state === "menu") drawMenu();
+  if (state === "game") drawGame();
+  if (state === "dead") drawDead();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
