@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>FNF GH4-REDUX</title>
+<title>FNF GHAST-TOPPING ON</title>
 <style>
 body {
   margin: 0;
@@ -21,7 +21,6 @@ canvas {
 
 <canvas id="game" width="800" height="450"></canvas>
 
-<!-- UMA ÚNICA MÚSICA -->
 <audio id="music" src="Intro.ogg" loop></audio>
 
 <script>
@@ -29,6 +28,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 let state = "menu"; // menu | game | dead
+let pacifico = false;
 
 // WASD
 const lanes = ["a","s","w","d"];
@@ -44,32 +44,34 @@ function drawMenu() {
   ctx.clearRect(0,0,800,450);
 
   ctx.fillStyle = "#ff0033";
-  ctx.font = "48px Arial Black";
-  ctx.fillText("GH4-REDUX", 230, 150);
+  ctx.font = "46px Arial Black";
+  ctx.fillText("GHAST-TOPPING ON", 150, 150);
 
-  ctx.font = "22px Arial";
-  ctx.fillText("IMPOSSIBLE MOD", 310, 190);
+  ctx.font = "20px Arial";
+  ctx.fillText("REDUX • IMPOSSIBLE MOD", 260, 190);
 
-  ctx.font = "18px monospace";
-  ctx.fillText("PRESS ENTER", 350, 260);
+  ctx.font = "16px monospace";
+  ctx.fillText("ENTER - START", 340, 250);
+  ctx.fillText("P - PACÍFICO: " + (pacifico ? "ON" : "OFF"), 300, 280);
 }
 
 // ================= NOTAS =================
 function spawnNotes() {
   for (let i = 0; i < 4; i++) {
     notes.push({
-      lane: Math.floor(Math.random() * 4),
+      lane: Math.floor(Math.random()*4),
       y: -20,
       fake: Math.random() < 0.4,
       invisible: Math.random() < 0.25
     });
   }
-  speed += 0.4; // cada vez mais impossível
+  speed += 0.4;
 }
 
 // ================= INPUT =================
 document.addEventListener("keydown", e => {
   if (state === "menu" && e.key === "Enter") startGame();
+  if (e.key.toLowerCase() === "p") pacifico = !pacifico;
   if (e.key === "Escape") backToMenu();
 
   if (state !== "game") return;
@@ -77,8 +79,8 @@ document.addEventListener("keydown", e => {
   const key = e.key.toLowerCase();
   notes.forEach(n => {
     if (lanes[n.lane] === key && Math.abs(n.y - 400) < 8) {
-      if (n.fake) hp -= 25;
-      else score += 500;
+      if (!n.fake) score += 500;
+      else if (!pacifico) hp -= 20;
       n.y = 9999;
     }
   });
@@ -107,14 +109,32 @@ setInterval(() => {
   if (state === "game") spawnNotes();
 }, 140);
 
+function drawHealthBar() {
+  ctx.fillStyle = "white";
+  ctx.fillRect(250, 15, 300, 14);
+
+  ctx.fillStyle = pacifico ? "#00ff00" : "#ff0033";
+  ctx.fillRect(250, 15, 3 * hp, 14);
+
+  ctx.strokeStyle = "black";
+  ctx.strokeRect(250, 15, 300, 14);
+
+  ctx.fillStyle = "white";
+  ctx.font = "12px monospace";
+  ctx.fillText("BOYFRIEND HP", 330, 12);
+}
+
 function drawGame() {
   ctx.clearRect(0,0,800,450);
 
+  // HUD
   ctx.fillStyle = "#ff0033";
   ctx.font = "14px monospace";
-  ctx.fillText("HP: " + hp, 10, 20);
-  ctx.fillText("Score: " + score, 10, 40);
-  ctx.fillText("Speed: " + speed.toFixed(1), 10, 60);
+  ctx.fillText("Score: " + score, 10, 20);
+  ctx.fillText("Speed: " + speed.toFixed(1), 10, 40);
+  ctx.fillText("Pacífico: " + (pacifico ? "ON" : "OFF"), 10, 60);
+
+  drawHealthBar();
 
   arrows.forEach((a,i)=>{
     ctx.fillText(a, 230 + i*100, 420);
@@ -123,8 +143,8 @@ function drawGame() {
   notes.forEach(n => {
     n.y += speed;
 
-    if (n.y > 430 && !n.fake) {
-      hp -= 15;
+    if (n.y > 430 && !n.fake && !pacifico) {
+      hp -= 10;
       n.y = 9999;
     }
 
@@ -134,7 +154,7 @@ function drawGame() {
     }
   });
 
-  if (hp <= 0) state = "dead";
+  if (hp <= 0 && !pacifico) state = "dead";
 }
 
 function drawDead() {
